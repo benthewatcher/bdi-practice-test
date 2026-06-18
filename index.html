@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DGI Practice Test — Certificate in Board Directorship</title>
+<style>
+  :root{--navy:#1F3864;--blue:#2E74B5;--gold:#8A7B3C;--light:#EAF0F7;--green:#1c7c43;--red:#b4341f;--grey:#f4f6f9;}
+  *{box-sizing:border-box;}
+  body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#eef1f5;color:#1d2733;line-height:1.5;}
+  .wrap{max-width:780px;margin:0 auto;padding:22px 16px 90px;}
+  header{background:var(--navy);color:#fff;border-radius:14px;padding:22px 24px;}
+  header .kick{color:#d9c98a;font-size:13px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;}
+  header h1{margin:4px 0 6px;font-size:23px;}
+  header p{margin:0;opacity:.85;font-size:14px;}
+  /* start screen */
+  .panel{background:#fff;border-radius:14px;padding:22px;box-shadow:0 1px 3px rgba(20,40,80,.08);margin-top:16px;}
+  .panel h2{margin:0 0 4px;font-size:18px;color:var(--navy);}
+  .panel p.sub{margin:0 0 16px;color:#5a6675;font-size:14px;}
+  .modes{display:grid;gap:10px;}
+  .mode{display:flex;justify-content:space-between;align-items:center;border:1.5px solid #dfe4ec;border-radius:11px;padding:14px 16px;cursor:pointer;transition:.15s;}
+  .mode:hover{border-color:var(--blue);background:var(--grey);}
+  .mode .t{font-weight:600;}
+  .mode .d{font-size:13px;color:#5a6675;}
+  .mode .n{background:var(--light);color:var(--navy);font-weight:700;border-radius:99px;padding:4px 12px;font-size:13px;white-space:nowrap;margin-left:12px;}
+  .mode.soon{opacity:.55;cursor:not-allowed;}
+  .note{font-size:12.5px;color:#7a8696;margin-top:14px;}
+  /* quiz */
+  #quiz{display:none;}
+  .bar{position:sticky;top:0;z-index:5;background:#eef1f5;padding:12px 0;margin-top:8px;}
+  .progwrap{background:#dde3ec;border-radius:99px;height:10px;overflow:hidden;}
+  .prog{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--gold));transition:width .3s;}
+  .meta{display:flex;justify-content:space-between;font-size:13px;color:#5a6675;margin-top:6px;}
+  .card{background:#fff;border-radius:14px;padding:22px 22px 8px;box-shadow:0 1px 3px rgba(20,40,80,.08);margin-bottom:16px;}
+  .chip{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--gold);padding:2px 9px;border-radius:99px;letter-spacing:.04em;}
+  .qtext{font-size:18px;font-weight:600;margin:10px 0 16px;}
+  .opt{display:flex;gap:12px;align-items:flex-start;border:1.5px solid #dfe4ec;border-radius:10px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:.15s;}
+  .opt:hover{border-color:var(--blue);background:var(--grey);}
+  .opt .letter{flex:0 0 26px;height:26px;border-radius:50%;background:var(--light);color:var(--navy);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .opt.sel{border-color:var(--blue);background:#e8f0fb;}
+  .opt.correct{border-color:var(--green);background:#e7f5ec;}
+  .opt.correct .letter{background:var(--green);color:#fff;}
+  .opt.wrong{border-color:var(--red);background:#fbeae6;}
+  .opt.wrong .letter{background:var(--red);color:#fff;}
+  .opt.disabled{cursor:default;}
+  .explain{display:none;border-left:4px solid var(--blue);background:var(--light);border-radius:0 8px 8px 0;padding:12px 14px;margin:4px 0 16px;font-size:14px;}
+  .explain.show{display:block;}
+  .explain b{color:var(--navy);}
+  .btnrow{display:flex;gap:10px;justify-content:space-between;margin-top:6px;}
+  button{font:inherit;font-weight:600;border:none;border-radius:10px;padding:12px 22px;cursor:pointer;}
+  .primary{background:var(--navy);color:#fff;} .primary:disabled{opacity:.4;cursor:default;}
+  .ghost{background:#e4e9f0;color:var(--navy);}
+  /* results */
+  #results{display:none;}
+  .scorebox{background:#fff;border-radius:14px;padding:30px;text-align:center;box-shadow:0 1px 3px rgba(20,40,80,.08);}
+  .scorenum{font-size:54px;font-weight:800;line-height:1;}
+  .verdict{display:inline-block;padding:6px 16px;border-radius:99px;font-weight:700;margin-top:10px;}
+  .pass{background:#e7f5ec;color:var(--green);} .fail{background:#fbeae6;color:var(--red);}
+  .bd{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0 4px;}
+  .bdcard{background:var(--grey);border-radius:10px;padding:10px 16px;font-size:13px;min-width:96px;}
+  .bdcard b{display:block;font-size:20px;color:var(--navy);}
+  .focus{text-align:left;margin:18px 0 4px;}
+  .focus h3{font-size:16px;color:var(--navy);margin:0 0 8px;}
+  .fcard{border:1.5px solid #e6d9a8;background:#fffaf0;border-left:5px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 14px;margin-bottom:10px;}
+  .fcard .fg{font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+  .fcard .ft{font-weight:700;color:var(--navy);display:block;margin:1px 0 4px;}
+  .fcard .fs{font-size:13.5px;color:#33404f;}
+  .fcard .fm{font-size:12px;color:#7a8696;margin-top:6px;}
+  .allgood{background:#e7f5ec;border-radius:10px;padding:16px;color:var(--green);font-weight:600;text-align:left;}
+  .reviewitem{font-size:14px;text-align:left;border-top:1px solid #eef1f5;padding:12px 0;}
+  .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;}
+  .tag.ok{background:#e7f5ec;color:var(--green);} .tag.no{background:#fbeae6;color:var(--red);}
+  .foot{font-size:12px;color:#8a95a3;text-align:center;margin-top:20px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kick">The World of Directorship</div>
+    <h1>Certificate in Board Directorship — Practice Test</h1>
+    <p>GCC BDI exam style · 4-option multiple choice · 60% pass mark</p>
+  </header>
+
+  <div id="start">
+    <div class="panel">
+      <h2>Choose a practice mode</h2>
+      <p class="sub">The real exam is 50 questions split equally across the 4 modules. Module 3 will be added once its materials are available.</p>
+      <div class="modes" id="modeList"></div>
+      <p class="note" id="poolNote"></p>
+    </div>
+  </div>
+
+  <div id="quiz">
+    <div class="bar">
+      <div class="progwrap"><div class="prog" id="prog"></div></div>
+      <div class="meta"><span id="counter"></span><span id="answered"></span></div>
+    </div>
+    <div id="qcontainer"></div>
+    <div class="btnrow">
+      <button class="ghost" id="prevBtn">Back</button>
+      <button class="primary" id="nextBtn">Next</button>
+    </div>
+  </div>
+
+  <div id="results">
+    <div class="scorebox">
+      <div class="scorenum" id="scorenum"></div>
+      <div id="verdict"></div>
+      <div class="bd" id="breakdown"></div>
+      <p id="scoremsg" style="color:#5a6675;font-size:14px;"></p>
+      <div class="focus" id="focus"></div>
+      <details id="reviewWrap" style="margin-top:14px;text-align:left;"><summary style="cursor:pointer;font-weight:600;color:var(--navy);">Show full question-by-question review</summary><div id="review"></div></details>
+      <button class="primary" id="retryBtn" style="margin-top:18px;">Back to menu</button>
+    </div>
+  </div>
+
+  <p class="foot">Draft — questions written in GCC BDI style from the course materials. Once you share the official sample paper, wording can be aligned to it exactly.</p>
+</div>
+
+<script>
+const BANK = [
+/* ===================== MODULE 1 ===================== */
+{m:1,q:"Sir Adrian Cadbury's seminal 1992 definition describes corporate governance as the system by which companies are:",o:["Directed and controlled","Funded and audited","Owned and traded","Regulated and licensed"],a:0,e:"Cadbury (1992): 'the system by which companies are <b>directed and controlled</b>.' Oman's CMA adopts this wording."},
+{m:1,q:"The four corporate governance principles (RAFT) are:",o:["Risk, Audit, Finance, Transparency","Responsibility, Accountability, Fairness, Transparency","Rules, Authority, Fairness, Trust","Responsibility, Accountability, Funding, Transparency"],a:1,e:"<b>RAFT = Responsibility, Accountability, Fairness, Transparency</b> — widely used by GCC regulators."},
+{m:1,q:"How many principles make up the G20 / OECD Principles of Corporate Governance (2023)?",o:["Four","Six","Ten","Thirteen"],a:1,e:"The G20/OECD Principles contain <b>six</b> principles. (Basel for banks = 13; OECD SOE = 7 chapters.)"},
+{m:1,q:"Under the Basel Committee's principles for banks, whose interests rank ABOVE shareholders' for a retail bank?",o:["Regulators","Employees","Depositors","Auditors"],a:2,e:"Basel states <b>depositors' interests rank above shareholders'</b> for retail banks."},
+{m:1,q:"A requirement that is mandatory or legally enforced (e.g. complying with the Company Law) is best described as:",o:["Conformance","Performance","Compliance","Stewardship"],a:2,e:"<b>Compliance</b> is mandatory/legal; <b>conformance</b> is normally voluntary; <b>performance</b> is about growing value."},
+{m:1,q:"The 'corporate veil' is the legal principle that:",o:["Directors must keep board discussions confidential","A company is a separate legal person, so its members are generally not personally liable for its debts","Shareholders cannot inspect the accounts","Related-party transactions must be hidden"],a:1,e:"The corporate veil reflects a company's <b>separate legal personality</b>; it can be 'lifted' in cases of fraud."},
+{m:1,q:"In which GCC country must ALL board members of listed companies be non-executive?",o:["Saudi Arabia","Oman","Bahrain","United Arab Emirates"],a:1,e:"<b>Oman</b> requires all listed-company board members to be non-executive. Others require a majority non-executive board and ~1/3 independent."},
+{m:1,q:"The UN Global Compact is built on how many principles, across how many areas?",o:["Ten principles across four areas","Six principles across three areas","Four principles across four areas","Thirteen principles across six areas"],a:0,e:"<b>Ten principles across four areas</b>: Human Rights (1–2), Labour (3–6), Environment (7–9), Anti-Corruption (10)."},
+{m:1,q:"On the stakeholder power/interest matrix, a stakeholder with HIGH power but LOW interest should be:",o:["Given minimal effort","Kept informed","Kept satisfied","Treated as a key player"],a:2,e:"High power + low interest = <b>keep satisfied</b>; the 'most dangerous' group as they may withdraw support."},
+{m:1,q:"Transferring a company's assets out for the benefit of controlling shareholders, at minority shareowners' expense, is:",o:["Tunnelling","Stewardship","Conformance","Materiality"],a:0,e:"<b>Tunnelling</b> — one way shareowner rights are eroded, with related-party transactions, insider trading and dilution."},
+{m:1,q:"King IV (South Africa) defines corporate governance by which four governance outcomes?",o:["Profit, growth, market share, dividends","Ethical culture, good performance, effective control, legitimacy","Responsibility, accountability, fairness, transparency","Planning, organising, leading, controlling"],a:1,e:"King IV: ethical and effective leadership towards <b>ethical culture, good performance, effective control and legitimacy</b>."},
+{m:1,q:"Which is the ONLY GCC country that is a member of the G20?",o:["United Arab Emirates","Qatar","Saudi Arabia","Kuwait"],a:2,e:"<b>Saudi Arabia</b> is the only GCC country in the G20. No GCC country is a member of the OECD."},
+{m:1,q:"The OECD Guidelines on Corporate Governance of State-Owned Enterprises (2015) are organised into how many chapters?",o:["Five","Six","Seven","Thirteen"],a:2,e:"The OECD SOE Guidelines have <b>seven</b> chapters (rationales, the state as owner, SOEs in the marketplace, equitable treatment, stakeholder relations, disclosure, board responsibilities)."},
+{m:1,q:"In governance, 'conformance' is best described as:",o:["A mandatory legal requirement","Acting within laws, codes and standards — normally voluntary","Growing revenue and shareholder value","Maximising profit for shareholders"],a:1,e:"<b>Conformance</b> is normally voluntary (norms, codes, expectations). Compliance is the mandatory/legal one."},
+{m:1,q:"The 'triple bottom line' of corporate sustainability comprises:",o:["Profit, People, Politics","Planet, People, Prosperity (Profit)","Price, Product, Promotion","Planet, Profit, Productivity"],a:1,e:"Triple bottom line = <b>Planet + People + Prosperity/Profit</b>."},
+{m:1,q:"'Stewardship' in corporate governance is best defined as:",o:["The separation of ownership and management","The board's role to protect the assets of shareowners","A mandatory disclosure requirement","The right of shareholders to vote"],a:1,e:"<b>Stewardship</b> = a role of the board to protect the assets of shareowners. Agency concerns the separation of ownership and control."},
+{m:1,q:"A 'rules-based' approach to governance is typically characterised by:",o:["Judgement and moral concepts","Prescriptive requirements using words like 'must' and 'shall'","Voluntary codes of best practice","Stakeholder consultation"],a:1,e:"Rules are <b>prescriptive and easier to enforce</b> ('must'/'shall'); principles are judgement-focused and often underpin rules."},
+/* ===================== MODULE 2 ===================== */
+{m:2,q:"According to Bob Tricker, the relationship between governance and management is best summarised as:",o:["Governance and management are the same function","Management runs the business; governance sees that it is run properly","Governance handles daily operations; management sets strategy","Only management is accountable to shareholders"],a:1,e:"Tricker (1984): 'If management is about running the business, governance is about seeing that it is run properly.'"},
+{m:2,q:"Under the Saudi CMA regulations, a director loses independent status if they have served on the board for more than:",o:["Three years","Six years","Nine years","Twelve years"],a:2,e:"Serving more than <b>nine years</b> (consecutive or not) contradicts the independence criteria."},
+{m:2,q:"Holding what percentage of a company's (or group company's) shares contradicts a director's independence?",o:["1% or more","5% or more","10% or more","25% or more"],a:1,e:"Holding <b>5% or more</b> of the shares (or being a relative of such a holder) breaks independence."},
+{m:2,q:"The Saudi CMA Corporate Governance Regulations state that combining the role of Chair with an executive position is:",o:["Permitted if the bylaws allow it","Permitted only for family companies","Prohibited, even if the bylaws provide otherwise","Required for listed companies"],a:2,e:"It is <b>prohibited</b> to hold the Chair and any executive position (MD/CEO/GM) at once, even if the bylaws allow it."},
+{m:2,q:"Cumulative voting is used in the GCC primarily to:",o:["Speed up board elections","Protect and empower minority shareholders","Guarantee the chairman's re-election","Reduce the number of board seats"],a:1,e:"Cumulative voting strengthens <b>minority shareholders'</b> ability to influence board elections."},
+{m:2,q:"In cumulative voting, the number of votes a shareholder has equals:",o:["One vote per shareholder","Shares held multiplied by the number of board seats to be filled","One vote per share regardless of seats","Shares held divided by the number of candidates"],a:1,e:"Votes = <b>shares × number of director seats</b>; a shareholder may concentrate all votes on one candidate."},
+{m:2,q:"A two-tier board structure consists of:",o:["An audit board and a remuneration board","A supervisory board (non-executives) and a management board (executives)","Two boards of equal executive directors","A shareholder board and a creditor board"],a:1,e:"Two-tier = a <b>Supervisory Board</b> (non-executives) overseeing a <b>Management Board</b> (executives)."},
+{m:2,q:"A unitary board is best described as:",o:["A single board of executive and non-executive directors","A board with only independent directors","Two separate boards for oversight and management","A board that only advises management"],a:0,e:"A unitary (one-tier) board is a <b>single body of executive and non-executive directors</b> (UK, US and the GCC)."},
+{m:2,q:"The role of a Shariah Supervisory Board is to:",o:["Approve executive pay","Certify that financial products comply with Islamic law","Conduct the external audit","Elect the chairman"],a:1,e:"A Shariah Supervisory Board <b>certifies Shariah compliance</b> of Islamic financial products and operations."},
+{m:2,q:"Which board committee is the most common among GCC boards (2021)?",o:["Risk","Nomination","Audit","Corporate Governance"],a:2,e:"<b>Audit</b> committees are most common (~80%), ahead of Remuneration (~53%) and Nomination (~42%)."},
+{m:2,q:"Board minutes should be written:",o:["In the present tense, naming each speaker","In reported speech (past tense), generally avoiding naming individuals","As a verbatim transcript","Only as a list of decisions, with no background"],a:1,e:"Minutes use <b>reported speech / past tense</b>, the conditional for future actions, and avoid naming individuals (collective responsibility)."},
+{m:2,q:"Who is primarily responsible for preparing and retaining board minutes?",o:["The CEO","The external auditor","The Board Secretary","The Chair of the audit committee"],a:2,e:"The <b>Board Secretary</b> prepares and retains minutes (responsible to the Chair, who confirms accuracy)."},
+{m:2,q:"Under the duty of care, the maximum number of company boards a director may serve on is:",o:["Three","Five","Seven","No limit"],a:1,e:"A director may sit on a maximum of <b>5</b> companies' boards (and must have sufficient time and competence)."},
+{m:2,q:"Under the duty of loyalty, a director facing a conflict of interest should:",o:["Vote in favour to show commitment","Disclose the conflict and abstain from voting","Resign from the board immediately","Delegate the decision to management"],a:1,e:"Duty of loyalty: <b>disclose all conflicts and abstain from voting</b>; prioritise the company; conduct related-party deals at arm's length."},
+{m:2,q:"The Business Judgment Rule (Art. 31) primarily:",o:["Removes all liability from directors","Shifts the burden of proof to claimants to show a decision was not properly taken","Requires unanimous board decisions","Caps director remuneration"],a:1,e:"The Business Judgment Rule <b>shifts the burden of proof to claimants</b> to prove a decision was not properly made."},
+{m:2,q:"A key argument for appointing a non-executive Chair (rather than a combined Chair/CEO) is that they:",o:["Cost less than an executive chair","Can counter the CEO's potential short-term focus and strengthen board independence","Are not accountable to shareholders","Can run day-to-day operations"],a:1,e:"A non-executive Chair <b>guides strategic oversight, counters CEO short-termism and supports board independence</b>."},
+{m:2,q:"Related-party transactions should be conducted:",o:["At a discount to the related party","On an arm's-length basis","Without disclosure to the board","Only with the CEO's approval"],a:1,e:"Related-party transactions must be on an <b>arm's-length basis</b> and properly disclosed."},
+/* ===================== MODULE 4 ===================== */
+{m:4,q:"In accounting, 'equity' is best described as:",o:["What the business owns","Money owed to suppliers","The owners' share after debts (owed back to the owners)","Cash held at the bank"],a:2,e:"Equity is the <b>owners' share after debts</b> — a liability of the business because it is owed back to the owners."},
+{m:4,q:"How many financial statements make up a complete set?",o:["Three","Four","Five","Six"],a:2,e:"<b>Five</b>: income statement, balance sheet, cash flow, statement of changes in equity, and the notes."},
+{m:4,q:"The cash flow statement is divided into three sections:",o:["Assets, Liabilities, Equity","Operating, Investing, Financing","Revenue, Costs, Profit","Current, Non-current, Total"],a:1,e:"Cash flow has three parts: <b>Operating, Investing and Financing</b> activities."},
+{m:4,q:"Which of the following is a CURRENT asset?",o:["Land and buildings","Intangible assets","Trade receivables","Investments in subsidiaries"],a:2,e:"<b>Trade receivables</b> (with stock and bank balances) are current assets; land, intangibles and subsidiaries are non-current."},
+{m:4,q:"The accrual (matching) assumption means revenue and expenses are recognised:",o:["Only when cash is received or paid","In the period in which they are earned/incurred, matched together","At the end of the company's life","When the auditor approves them"],a:1,e:"Accruals/matching: recognise income and related costs <b>when earned/incurred</b>, not when cash moves."},
+{m:4,q:"The 'going concern' assumption means:",o:["The company is about to be liquidated","The company will continue operating for the foreseeable future","The company is growing concern by concern","All assets must be sold quickly"],a:1,e:"Going concern assumes the business <b>will keep trading</b> for the foreseeable future — a positive, normal-basis assumption."},
+{m:4,q:"IFRS stands for:",o:["International Financial Reporting Standards","Internal Finance Risk Standards","International Fiscal Reporting System","Independent Financial Review Standards"],a:0,e:"<b>International Financial Reporting Standards</b> — required for listed companies, banks and insurers across the GCC."},
+{m:4,q:"Which external audit opinion is the 'clean' opinion?",o:["Qualified","Adverse","Disclaimer","Unqualified"],a:3,e:"<b>Unqualified</b> is the clean opinion. The others (Qualified, Adverse, Disclaimer) signal problems or scope limits."},
+{m:4,q:"Regarding fraud, the external auditor's role is to:",o:["Guarantee no fraud exists","Give an opinion on whether the statements are fairly presented — detecting fraud is not their remit","Act as forensic accountants","Prosecute directors who commit fraud"],a:1,e:"Auditors give an <b>opinion</b> (true & fair); they are not forensic accountants and spotting fraud is not their remit."},
+{m:4,q:"Who is responsible for preparing the financial statements?",o:["The external auditor","Management / the directors","The regulator","The audit committee chair personally"],a:1,e:"Preparing the statements and the directors' responsibility statement is <b>management's</b> responsibility, not the auditor's."},
+{m:4,q:"Which funding source must be repaid with interest regardless of company performance?",o:["A grant","Equity","Debt","Retained earnings"],a:2,e:"<b>Debt</b> must be repaid and interest paid regardless of performance. Grants need no repayment; equity dividends are discretionary."},
+{m:4,q:"The Weighted Average Cost of Capital (WACC) is typically used as the:",o:["Tax rate","Hurdle / discount rate for appraising investments","Dividend per share","Gearing ratio"],a:1,e:"WACC weights the cost of debt and equity and is used as the <b>hurdle / discount rate</b>."},
+{m:4,q:"Free Cash Flow is calculated as:",o:["Revenue minus expenses","Operating cash flow minus capital expenditure","Net profit plus depreciation","Assets minus liabilities"],a:1,e:"Free Cash Flow = <b>Operating Cash Flow − Capital Expenditure</b> — the cash available for dividends, debt reduction or investment."},
+{m:4,q:"Enterprise value is best expressed as:",o:["Market capitalisation plus debt minus cash","Total assets minus total liabilities","Net profit times the share price","Share price times number of employees"],a:0,e:"Enterprise value = <b>market capitalisation + debt − cash</b> — the cost to acquire full ownership."},
+{m:4,q:"Which investment appraisal method finds the discount rate at which NPV equals zero?",o:["Payback Period","Net Present Value","Internal Rate of Return (IRR)","Accounting Rate of Return"],a:2,e:"<b>IRR</b> is the discount rate where NPV = 0; if it exceeds the cost of capital, the project is attractive."},
+{m:4,q:"A positive Net Present Value (NPV) indicates that a project:",o:["Should always be rejected","Generates more value than its cost","Has no risk","Recovers its cost instantly"],a:1,e:"A <b>positive NPV</b> means the project generates more value than it costs at the chosen discount rate."},
+{m:4,q:"Which ratio measures LIQUIDITY — whether a company can pay its bills as they fall due?",o:["Gearing ratio","Current ratio","Return on equity","Gross profit margin"],a:1,e:"The <b>current ratio</b> (and quick ratio) measure liquidity. Gearing = leverage; ROE and margins = profitability."},
+];
+
+/* ---- Topic tags (in BANK order) + study summaries drawn from the guides ---- */
+const TOPIC_ORDER = [
+  "m1-def","m1-raft","m1-fw","m1-fw","m1-pcc","m1-veil","m1-gcc","m1-cr","m1-stake","m1-stake","m1-def","m1-gcc","m1-fw","m1-pcc","m1-cr","m1-veil","m1-pcc",
+  "m2-roles","m2-indep","m2-indep","m2-chair","m2-vote","m2-vote","m2-types","m2-types","m2-types","m2-comm","m2-comm","m2-comm","m2-duties","m2-duties","m2-duties","m2-chair","m2-duties",
+  "m4-cat","m4-stmt","m4-stmt","m4-cat","m4-assum","m4-assum","m4-assum","m4-audit","m4-audit","m4-audit","m4-fund","m4-fund","m4-fund","m4-val","m4-appr","m4-appr","m4-ratio"
+];
+BANK.forEach((q,i)=>{q.t=TOPIC_ORDER[i];});
+const TOPICS = {
+  "m1-def":{m:1,g:"Module 1 Guide — Topic 1.1",title:"Definitions of corporate governance",s:"Match each definition to its source: Cadbury (1992) = 'directed and controlled'; King IV (South Africa) = ethical & effective leadership delivering ethical culture, good performance, effective control and legitimacy; IFC = long-term shareholder and stakeholder value; Basel = for retail banks, depositors rank above shareholders."},
+  "m1-raft":{m:1,g:"Module 1 Guide — Topic 1.2",title:"The RAFT principles",s:"The four governance principles are Responsibility, Accountability, Fairness and Transparency — widely used by GCC regulators."},
+  "m1-fw":{m:1,g:"Module 1 Guide — Topic 1.3–1.4",title:"Frameworks & standards",s:"Memorise the counts: G20/OECD Principles = 6; OECD SOE Guidelines = 7 chapters; Basel principles for banks = 13; IFC ESG Progression Matrix = 6 elements over 4 maturity levels. Basel ranks depositors above shareholders for retail banks."},
+  "m1-pcc":{m:1,g:"Module 1 Guide — Topic 2",title:"Performance, conformance & compliance",s:"Performance = growing business value; Conformance = acting within codes/standards, normally voluntary; Compliance = mandatory/legal (e.g. Company Law). Rules are prescriptive ('must/shall'); principles are judgement-based."},
+  "m1-veil":{m:1,g:"Module 1 Guide — Topic 3",title:"Corporate veil, agency & stewardship",s:"Corporate veil = the company is a separate legal person, so members aren't generally personally liable (it can be 'lifted' for fraud). Agency = separation of ownership and control. Stewardship = the board protecting owners' assets."},
+  "m1-gcc":{m:1,g:"Module 1 Guide — Topic 3",title:"GCC context & company forms",s:"Saudi Arabia is the only GCC country in the G20; no GCC country is in the OECD. Oman requires all listed-company board members to be non-executive; Saudi requires Chair/CEO separation and an audit committee."},
+  "m1-cr":{m:1,g:"Module 1 Guide — Topic 4",title:"Corporate responsibility & ESG",s:"Triple bottom line = Planet + People + Prosperity/Profit. The UN Global Compact has 10 principles across 4 areas (Human Rights, Labour, Environment, Anti-Corruption). The social 'licence to operate' can be withdrawn."},
+  "m1-stake":{m:1,g:"Module 1 Guide — Topic 6",title:"Stakeholders & shareowner rights",s:"Power/interest matrix: high power+high interest = key players; high power+low interest = keep satisfied (most 'dangerous'); low power+high interest = keep informed; low/low = minimal effort. Shareowner rights are eroded by related-party transactions, insider trading, dilution and tunnelling."},
+  "m2-roles":{m:2,g:"Module 2 Guide — Section 1",title:"Board roles vs management",s:"Governance is about seeing the business is run properly; management runs it (Tricker). Shareholders appoint the board; the board appoints and oversees the executive."},
+  "m2-indep":{m:2,g:"Module 2 Guide — Section 2",title:"Independent director criteria",s:"A director is NOT independent if they hold 5%+ of shares, are a relative of a 5% holder / board member / senior executive, were an employee, auditor or main supplier in the last 2 years, receive over SAR 200,000 in extra consideration, or have served more than 9 years."},
+  "m2-chair":{m:2,g:"Module 2 Guide — Section 3",title:"Chair/CEO separation & the board secretary",s:"Saudi CMA prohibits one person being Chair and an executive (CEO/MD/GM) at the same time. The CEO runs the business; the Chair runs the board. A non-executive Chair strengthens independence and counters CEO short-termism. The Board Secretary prepares and retains minutes."},
+  "m2-vote":{m:2,g:"Module 2 Guide — Section 4",title:"Cumulative voting & board composition",s:"Cumulative voting protects minority shareholders: votes = shares × number of seats, and may be concentrated on one candidate. Director competencies split into behavioural, technical and governance."},
+  "m2-types":{m:2,g:"Module 2 Guide — Section 5",title:"Types of boards",s:"Unitary = one board of executives + non-executives (UK/US/GCC). Two-tier = a supervisory board (non-execs) over a management board (execs). A Shariah Supervisory Board certifies Shariah compliance of Islamic products."},
+  "m2-comm":{m:2,g:"Module 2 Guide — Section 6",title:"Committees & board processes",s:"Audit is the most common GCC committee (~80%). Minutes are written in reported speech (past tense), use would/should for future actions, avoid naming individuals, record the reasons for decisions, and are prepared by the Board Secretary."},
+  "m2-duties":{m:2,g:"Module 2 Guide — Section 8",title:"Directors' duties & liabilities",s:"Duty of care: competence, sufficient time, a maximum of 5 boards, and acting within authority. Duty of loyalty: company first, disclose conflicts and abstain, don't compete or take the company's opportunity, keep related-party deals at arm's length. The Business Judgment Rule (Art. 31) shifts the burden of proof to claimants."},
+  "m4-cat":{m:4,g:"Module 4 Guide — Section 1",title:"Naming the numbers",s:"Five categories: Income, Expenditure, Assets (own), Liabilities (owe), Equity (owners' share, owed back to them). Current assets (stock, receivables, cash) vs non-current (land, equipment, intangibles, subsidiaries)."},
+  "m4-stmt":{m:4,g:"Module 4 Guide — Section 2",title:"The five financial statements",s:"Income statement, Balance sheet, Cash flow, Statement of changes in equity, and Notes. The cash flow statement has three parts: Operating, Investing and Financing."},
+  "m4-assum":{m:4,g:"Module 4 Guide — Sections 3–4",title:"Accounting concepts & standards",s:"Financial accounting = external, rules-based (IFRS), historic, audited; management accounting = internal, future, decisions. Accruals/matching recognises income and costs when earned/incurred, not when cash moves. Going concern = the business will keep trading. IFRS = International Financial Reporting Standards."},
+  "m4-ratio":{m:4,g:"Module 4 Guide — Section 5",title:"Ratio analysis",s:"Four lenses: Profitability (margins, ROE, ROCE), Liquidity (current & quick ratio), Leverage/Solvency (gearing, interest cover), Efficiency (debtor days, stock turnover). The current ratio measures liquidity."},
+  "m4-audit":{m:4,g:"Module 4 Guide — Section 6",title:"Assurance & external audit",s:"External auditors give an opinion (Unqualified / Qualified / Adverse / Disclaimer) on whether statements are fairly presented — detecting fraud is NOT their remit, and management prepares the accounts. The audit committee safeguards statement integrity, internal control and risk, related-party transactions, and appoints the auditors."},
+  "m4-fund":{m:4,g:"Module 4 Guide — Section 7",title:"Funding & cost of capital",s:"Grants need no repayment; equity dividends are discretionary; debt must be repaid with interest regardless of performance. Free Cash Flow = Operating Cash Flow − Capex. WACC blends the cost of debt and equity and is used as the hurdle/discount rate."},
+  "m4-val":{m:4,g:"Module 4 Guide — Section 8",title:"Valuing a business",s:"Methods: net asset basis, earnings/EBITDA basis, enterprise value (market cap + debt − cash) and discounted cash flow (NPV of future cash flows)."},
+  "m4-appr":{m:4,g:"Module 4 Guide — Section 9",title:"Investment appraisal",s:"Payback = time to recover the investment; NPV = present value of inflows minus cost (positive adds value); IRR = the discount rate where NPV = 0 (good if above the cost of capital); ARR = average accounting profit / average investment."},
+};
+
+const MODES = [
+  {key:"all",label:"Full mock exam",desc:"All available questions, all modules",pool:()=>BANK.slice()},
+  {key:1,label:"Module 1 — Corporate Governance Essentials",desc:"Definitions, frameworks, stakeholders",pool:()=>BANK.filter(x=>x.m===1)},
+  {key:2,label:"Module 2 — The Effective Director",desc:"Roles, board types, duties",pool:()=>BANK.filter(x=>x.m===2)},
+  {key:3,label:"Module 3 — coming soon",desc:"Add the Module 3 materials to unlock",pool:()=>[],soon:true},
+  {key:4,label:"Module 4 — Finance, Accounting & Reporting",desc:"Statements, audit, valuation, appraisal",pool:()=>BANK.filter(x=>x.m===4)},
+];
+const MNAME={1:"Module 1",2:"Module 2",3:"Module 3",4:"Module 4"};
+
+let questions=[], cur=0, answers=[];
+const $=id=>document.getElementById(id);
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function renderStart(){
+  const c=BANK.filter(x=>x.m===1).length, c2=BANK.filter(x=>x.m===2).length, c4=BANK.filter(x=>x.m===4).length;
+  $("poolNote").innerHTML=`Question pool: Module 1 (${c}) · Module 2 (${c2}) · Module 4 (${c4}) · Total ${BANK.length}. Each attempt shuffles question and answer order.`;
+  $("modeList").innerHTML=MODES.map((mo,i)=>{
+    const n=mo.soon?"—":mo.pool().length+" Qs";
+    return `<div class="mode ${mo.soon?'soon':''}" data-i="${i}"><div><div class="t">${mo.label}</div><div class="d">${mo.desc}</div></div><div class="n">${n}</div></div>`;
+  }).join("");
+  document.querySelectorAll('.mode').forEach(el=>el.onclick=()=>{const mo=MODES[+el.dataset.i];if(mo.soon)return;startQuiz(mo);});
+}
+
+function startQuiz(mode){
+  let pool=mode.pool();
+  // shuffle questions; clone & shuffle options keeping answer correct
+  questions=shuffle(pool.slice()).map(orig=>{
+    const idx=orig.o.map((_,i)=>i); shuffle(idx);
+    return {m:orig.m,t:orig.t,q:orig.q,o:idx.map(i=>orig.o[i]),a:idx.indexOf(orig.a),e:orig.e};
+  });
+  answers=Array(questions.length).fill(null); cur=0;
+  $("start").style.display="none"; $("results").style.display="none"; $("quiz").style.display="block";
+  render();
+}
+
+function render(){
+  const Q=questions[cur], locked=answers[cur]!==null;
+  let h=`<div class="card"><span class="chip">${MNAME[Q.m]}</span><div class="qtext">${Q.q}</div>`;
+  Q.o.forEach((opt,i)=>{
+    let cls="opt";
+    if(locked){cls+=" disabled";if(i===Q.a)cls+=" correct";if(i===answers[cur]&&answers[cur]!==Q.a)cls+=" wrong";}
+    else if(i===answers[cur])cls+=" sel";
+    h+=`<div class="${cls}" data-i="${i}"><div class="letter">${"ABCD"[i]}</div><div>${opt}</div></div>`;
+  });
+  h+=`<div class="explain ${locked?'show':''}"><b>Explanation:</b> ${Q.e}</div></div>`;
+  $("qcontainer").innerHTML=h;
+  if(!locked)$("qcontainer").querySelectorAll('.opt').forEach(el=>el.onclick=()=>{answers[cur]=+el.dataset.i;render();});
+  $("counter").textContent=`Question ${cur+1} of ${questions.length}`;
+  const ac=answers.filter(a=>a!==null).length;
+  $("answered").textContent=`${ac} answered`;
+  $("prog").style.width=(ac/questions.length*100)+"%";
+  $("prevBtn").style.visibility=cur===0?"hidden":"visible";
+  $("nextBtn").textContent=cur===questions.length-1?"See results":"Next";
+  $("nextBtn").disabled=answers[cur]===null;
+}
+$("nextBtn").onclick=()=>{if(cur===questions.length-1)showResults();else{cur++;render();}};
+$("prevBtn").onclick=()=>{if(cur>0){cur--;render();}};
+
+function showResults(){
+  const score=answers.reduce((s,a,i)=>s+(a===questions[i].a?1:0),0);
+  const pct=Math.round(score/questions.length*100), pass=pct>=60;
+  $("quiz").style.display="none"; $("results").style.display="block";
+  $("scorenum").textContent=`${score}/${questions.length}`;
+  $("verdict").innerHTML=`<span class="verdict ${pass?'pass':'fail'}">${pct}% — ${pass?'PASS':'Below pass mark'}</span>`;
+  // per-module breakdown
+  const mods={}; questions.forEach((Q,i)=>{mods[Q.m]=mods[Q.m]||{c:0,t:0};mods[Q.m].t++;if(answers[i]===Q.a)mods[Q.m].c++;});
+  $("breakdown").innerHTML=Object.keys(mods).sort().map(m=>`<div class="bdcard">${MNAME[m]}<b>${mods[m].c}/${mods[m].t}</b></div>`).join("");
+  $("scoremsg").textContent=pass?"Above the 60% pass mark. Aim for 70–80% before the real exam.":"The pass mark is 60% (30/50 in the full exam). Focus your revision on the areas below, then retry.";
+  // focus areas: topics with at least one wrong answer, ordered by most missed
+  const tcount={};
+  questions.forEach((Q,i)=>{ if(answers[i]!==Q.a){ tcount[Q.t]=(tcount[Q.t]||0)+1; } });
+  const wrongTopics=Object.keys(tcount).sort((a,b)=>(TOPICS[a].m-TOPICS[b].m)||(tcount[b]-tcount[a]));
+  if(wrongTopics.length===0){
+    $("focus").innerHTML=`<div class="allgood">Perfect score — no weak areas to flag. Keep the frameworks fresh and aim to stay in the 70–80% range.</div>`;
+  } else {
+    let f=`<h3>Areas to focus on (${wrongTopics.length})</h3>`;
+    wrongTopics.forEach(t=>{
+      const T=TOPICS[t], miss=tcount[t];
+      f+=`<div class="fcard"><span class="fg">${MNAME[T.m]} · ${miss} to review</span><span class="ft">${T.title}</span><span class="fs">${T.s}</span><div class="fm">Revise: ${T.g}</div></div>`;
+    });
+    $("focus").innerHTML=f;
+  }
+  let rev="";
+  questions.forEach((Q,i)=>{
+    const ok=answers[i]===Q.a;
+    rev+=`<div class="reviewitem"><span class="tag ${ok?'ok':'no'}">${ok?'Correct':'Review'}</span> <b>Q${i+1} · ${MNAME[Q.m]}.</b> ${Q.q}<br>`;
+    if(!ok)rev+=`<span style="color:var(--red)">Your answer: ${answers[i]===null?'—':'ABCD'[answers[i]]+') '+Q.o[answers[i]]}</span><br>`;
+    rev+=`<span style="color:var(--green)">Correct: ${"ABCD"[Q.a]}) ${Q.o[Q.a]}</span></div>`;
+  });
+  $("review").innerHTML=rev; window.scrollTo(0,0);
+}
+$("retryBtn").onclick=()=>{$("results").style.display="none";$("start").style.display="block";window.scrollTo(0,0);};
+renderStart();
+</script>
+</body>
+</html>
