@@ -75,6 +75,16 @@
   .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;}
   .tag.ok{background:#e7f5ec;color:var(--green);} .tag.no{background:#fbeae6;color:var(--red);}
   .foot{font-size:12px;color:#8a95a3;text-align:center;margin-top:20px;}
+  /* exam timer (Mock exams only) */
+  .timer{display:none;flex-direction:column;align-items:center;line-height:1.12;padding:2px 12px;border-radius:10px;}
+  .timer.on{display:inline-flex;}
+  .timer .tval{font-variant-numeric:tabular-nums;font-weight:800;font-size:16px;color:var(--navy);letter-spacing:.02em;}
+  .timer .tcap{font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#9aa4b1;margin-top:1px;}
+  .timer.pending .tval{color:#9aa4b1;}
+  .timer.warn{background:#fff8e8;} .timer.warn .tval{color:#8a5a00;} .timer.warn .tcap{color:#b08524;}
+  .timer.danger{background:#fbeae6;} .timer.danger .tval{color:var(--red);animation:tpulse 1s ease-in-out infinite;} .timer.danger .tcap{color:var(--red);}
+  @keyframes tpulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .timenote{background:#fbeae6;color:var(--red);border-radius:10px;padding:10px 14px;font-weight:700;font-size:14px;margin-bottom:14px;}
 </style>
 </head>
 <body>
@@ -101,7 +111,7 @@
 
   <div id="quiz">
     <div class="bar">
-      <div class="topline"><span class="qtitle" id="qtitle"></span><button class="exit" id="exitBtn">✕ Exit to menu</button></div>
+      <div class="topline"><span class="qtitle" id="qtitle"></span><div class="timer" id="timer"><span class="tval" id="timerVal"></span><span class="tcap" id="timerCap"></span></div><button class="exit" id="exitBtn">✕ Exit to menu</button></div>
       <div class="progwrap"><div class="prog" id="prog"></div></div>
       <div class="meta"><span id="counter"></span><span id="answered"></span></div>
     </div>
@@ -114,6 +124,7 @@
 
   <div id="results">
     <div class="scorebox">
+      <div class="timenote" id="timeNote" style="display:none;">⏱ Time expired — your paper was auto-submitted.</div>
       <div class="scorenum" id="scorenum"></div>
       <div id="verdict"></div>
       <div class="bd" id="breakdown"></div>
@@ -139,12 +150,17 @@ function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random
 
 let questions=[], cur=0, answers=[], quizTitle="";
 
+// Exam timer (Mock exams only). MOCK_MINUTES is the full-paper time limit —
+// set it to the official GCC BDI figure once known; it is the only number to change.
+const MOCK_MINUTES = 90;
+let examMinutes=0, examStarted=false, examDeadline=0, timerId=null, timeExpired=false;
+
 function renderStart(){
   // mock exam buttons
   $("mockList").innerHTML=MOCKS.map((ids,v)=>'<div class="bigmode" data-v="'+v+'" style="margin-bottom:10px;"><div><div class="t">Mock '+(v+1)+'</div><div class="d">50 questions · alternative paper · 60% to pass</div></div><div class="n">50 Qs</div></div>').join("");
   document.querySelectorAll('#mockList .bigmode').forEach(el=>el.onclick=()=>{
     const v=+el.dataset.v;
-    startQuiz(MOCKS[v].map(i=>BANK[i]), "Mock "+(v+1));
+    startQuiz(MOCKS[v].map(i=>BANK[i]), "Mock "+(v+1), MOCK_MINUTES);
   });
   $("poolNote").innerHTML="Question pool: "+MODULES.map(m=>MNAME[m]+" ("+BANK.filter(q=>q.m===m).length+")").join(" · ")+" · Total "+BANK.length+".";
   let h="";
@@ -164,13 +180,15 @@ function renderStart(){
   });
 }
 
-function startQuiz(pool, title){
+function startQuiz(pool, title, minutes){
   quizTitle=title;
   questions=shuffle(pool.slice()).map(orig=>{
     const idx=orig.o.map((_,i)=>i); shuffle(idx);
     return {m:orig.m,t:orig.t,q:orig.q,o:idx.map(i=>orig.o[i]),a:idx.indexOf(orig.a),e:orig.e};
   });
   answers=Array(questions.length).fill(null); cur=0;
+  stopTimer(); examMinutes=minutes||0; examStarted=false; examDeadline=0; timeExpired=false;
+  setupTimerDisplay();
   $("start").style.display="none"; $("results").style.display="none"; $("quiz").style.display="block";
   render(); window.scrollTo(0,0);
 }
@@ -187,7 +205,7 @@ function render(){
   });
   h+='<div class="explain '+(locked?'show':'')+'"><b>Explanation:</b> '+Q.e+'</div></div>';
   $("qcontainer").innerHTML=h;
-  if(!locked)$("qcontainer").querySelectorAll('.opt').forEach(el=>el.onclick=()=>{answers[cur]=+el.dataset.i;render();});
+  if(!locked)$("qcontainer").querySelectorAll('.opt').forEach(el=>el.onclick=()=>{answers[cur]=+el.dataset.i;startExamTimer();render();});
   $("counter").textContent="Question "+(cur+1)+" of "+questions.length;
   const ac=answers.filter(a=>a!==null).length;
   $("answered").textContent=ac+" answered";
@@ -198,12 +216,36 @@ function render(){
 }
 $("nextBtn").onclick=()=>{if(cur===questions.length-1)showResults();else{cur++;render();window.scrollTo(0,0);}};
 $("prevBtn").onclick=()=>{if(cur>0){cur--;render();window.scrollTo(0,0);}};
-$("exitBtn").onclick=()=>{ if(confirm("Exit this quiz and return to the menu? Progress will be lost.")){ $("quiz").style.display="none"; $("start").style.display="block"; window.scrollTo(0,0);} };
+$("exitBtn").onclick=()=>{ if(confirm("Exit this quiz and return to the menu? Progress will be lost.")){ stopTimer(); $("quiz").style.display="none"; $("start").style.display="block"; window.scrollTo(0,0);} };
+
+// ---- Exam timer (Mock exams only) ----
+function setupTimerDisplay(){
+  const t=$("timer");
+  if(examMinutes>0){ t.className="timer on pending"; $("timerVal").textContent=examMinutes+":00"; $("timerCap").textContent="starts on first answer"; }
+  else { t.className="timer"; }
+}
+function startExamTimer(){
+  if(examMinutes<=0 || examStarted) return;
+  examStarted=true; examDeadline=Date.now()+examMinutes*60*1000;
+  $("timerCap").textContent="time left";
+  timerId=setInterval(tickTimer,1000); tickTimer();
+}
+function tickTimer(){
+  const rem=examDeadline-Date.now();
+  if(rem<=0){ $("timerVal").textContent="0:00"; $("timer").className="timer on danger"; stopTimer(); autoSubmit(); return; }
+  const s=Math.ceil(rem/1000);
+  $("timerVal").textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+  $("timer").className="timer on"+(rem<=60000?" danger":rem<=300000?" warn":"");
+}
+function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+function autoSubmit(){ if(timeExpired) return; timeExpired=true; showResults(); }
 
 function showResults(){
+  stopTimer();
   const score=answers.reduce((s,a,i)=>s+(a===questions[i].a?1:0),0);
   const pct=Math.round(score/questions.length*100), pass=pct>=60;
   $("quiz").style.display="none"; $("results").style.display="block";
+  $("timeNote").style.display = timeExpired ? "block" : "none";
   $("scorenum").textContent=score+"/"+questions.length;
   $("verdict").innerHTML='<span class="verdict '+(pass?'pass':'fail')+'">'+pct+'% — '+(pass?'PASS':'Below pass mark')+'</span>';
   const mods={}; questions.forEach((Q,i)=>{mods[Q.m]=mods[Q.m]||{c:0,t:0};mods[Q.m].t++;if(answers[i]===Q.a)mods[Q.m].c++;});
