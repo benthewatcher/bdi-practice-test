@@ -131,7 +131,10 @@
       <p id="scoremsg" style="color:#5a6675;font-size:14px;"></p>
       <div class="focus" id="focus"></div>
       <details id="reviewWrap" style="margin-top:14px;text-align:left;"><summary style="cursor:pointer;font-weight:600;color:var(--navy);">Show full question-by-question review</summary><div id="review"></div></details>
-      <button class="nav primary" id="retryBtn" style="margin-top:18px;">Back to menu</button>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px;">
+        <button class="nav primary" id="reviseBtn" style="display:none;">Practice your weak areas</button>
+        <button class="nav ghost" id="retryBtn">Back to menu</button>
+      </div>
     </div>
   </div>
 
@@ -150,10 +153,12 @@ function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random
 
 let questions=[], cur=0, answers=[], quizTitle="";
 
-// Exam timer (Mock exams only). MOCK_MINUTES is the full-paper time limit —
-// set it to the official GCC BDI figure once known; it is the only number to change.
+// Exam timer (Mock exams only). MOCK_MINUTES is the full-paper time limit;
+// set it to the official GCC BDI figure once known. It is the only number to change.
 const MOCK_MINUTES = 90;
 let examMinutes=0, examStarted=false, examDeadline=0, timerId=null, timeExpired=false;
+let revisionPool=[];  // "Practice your weak areas" set, rebuilt on each results screen
+const REVISE_CAP = 25;  // keep the drill focused: all missed questions, plus fresh topic ones up to this total
 
 function renderStart(){
   // mock exam buttons
@@ -240,6 +245,32 @@ function tickTimer(){
 function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
 function autoSubmit(){ if(timeExpired) return; timeExpired=true; showResults(); }
 
+// ---- Weakness tracking + revision (reusable; scaffolded for a future store / back end) ----
+function qid(q){ return q.m+"|"+q.t+"|"+q.q; }  // stable key, independent of option shuffling
+
+// Where weaknesses live. In-memory for now, so nothing persists between visits.
+// SCAFFOLD (use case 2): swap these three method bodies for localStorage, or a Supabase/REST
+// back end, with no caller changes. Keys are qid() strings, so they also work across different
+// materials. A future menu item could quiz WeaknessStore.all() ("practise everything I've missed").
+const WeaknessStore = {
+  _ids: new Set(),
+  record(qs, ans){ qs.forEach((q,i)=>{ if(ans[i]!==q.a) this._ids.add(qid(q)); }); },
+  clearCorrect(qs, ans){ qs.forEach((q,i)=>{ if(ans[i]===q.a) this._ids.delete(qid(q)); }); },
+  all(){ return [...this._ids]; }
+};
+
+// Revision set = the questions missed + unseen questions on the same weak topics.
+// Pass a different `bank` to reuse this engine for other course material (use case 2).
+function buildRevisionPool(qs, ans, bank){
+  bank = bank || BANK;
+  const missed = qs.filter((q,i)=>ans[i]!==q.a);
+  const failedTopics = new Set(missed.map(q=>q.t));
+  const asked = new Set(qs.map(q=>q.q));
+  const variations = bank.filter(b=>failedTopics.has(b.t) && !asked.has(b.q));
+  const room = Math.max(0, REVISE_CAP - missed.length);   // always keep every missed question
+  return missed.concat(shuffle(variations).slice(0, room));
+}
+
 function showResults(){
   stopTimer();
   const score=answers.reduce((s,a,i)=>s+(a===questions[i].a?1:0),0);
@@ -267,9 +298,18 @@ function showResults(){
     if(!ok)rev+='<span style="color:var(--red)">Your answer: '+(answers[i]===null?'—':"ABCD"[answers[i]]+') '+Q.o[answers[i]])+'</span><br>';
     rev+='<span style="color:var(--green)">Correct: '+"ABCD"[Q.a]+') '+Q.o[Q.a]+'</span></div>';
   });
-  $("review").innerHTML=rev; window.scrollTo(0,0);
+  $("review").innerHTML=rev;
+  // "Practice your weak areas": update the store, then build the drill from this attempt
+  WeaknessStore.clearCorrect(questions, answers);
+  WeaknessStore.record(questions, answers);
+  revisionPool = buildRevisionPool(questions, answers);
+  const missed = questions.filter((q,i)=>answers[i]!==q.a).length;
+  if(missed){ $("reviseBtn").style.display=""; $("reviseBtn").textContent="Practice your weak areas ("+revisionPool.length+")"; }
+  else { $("reviseBtn").style.display="none"; }
+  window.scrollTo(0,0);
 }
 $("retryBtn").onclick=()=>{$("results").style.display="none";$("start").style.display="block";window.scrollTo(0,0);};
+$("reviseBtn").onclick=()=>{ if(revisionPool.length) startQuiz(revisionPool, "Practice your weak areas"); };
 renderStart();
 </script>
 </body>
