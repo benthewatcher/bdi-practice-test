@@ -96,6 +96,11 @@
   </header>
 
   <div id="start">
+    <div class="panel" id="resumePanel" style="display:none;">
+      <h2>Welcome back</h2>
+      <p class="sub">Pick up where you left off. These are questions you've missed before on this device, saved automatically.</p>
+      <div class="bigmode" id="resumeBtn"><div><div class="t">Practice your saved weak areas</div><div class="d">Drill the ones you keep getting wrong</div></div><div class="n" id="resumeN"></div></div>
+    </div>
     <div class="panel">
       <h2>Full mock exams</h2>
       <p class="sub">Three alternative 50-question papers. Each Mock draws a largely different set of questions across the modules — sit them in turn for fresh practice. Question and answer order also reshuffle every attempt.</p>
@@ -181,8 +186,10 @@ function renderStart(){
   document.querySelectorAll('.setbtn').forEach(el=>el.onclick=()=>{
     const m=+el.dataset.m, s=el.dataset.s;
     let pool=BANK.filter(q=>q.m===m && (s==="all"||q.set==+s));
-    startQuiz(pool, s==="all"?("Module "+m+" — all sets"):("Module "+m+" — Set "+s));
+    startQuiz(pool, s==="all"?("Module "+m+" · all sets"):("Module "+m+" · Set "+s));
   });
+  $("resumeBtn").onclick=()=>{ const pool=savedWeaknessPool(); if(pool.length) startQuiz(shuffle(pool).slice(0,REVISE_CAP), "Saved weak areas"); };
+  renderResume();
 }
 
 function startQuiz(pool, title, minutes){
@@ -221,7 +228,7 @@ function render(){
 }
 $("nextBtn").onclick=()=>{if(cur===questions.length-1)showResults();else{cur++;render();window.scrollTo(0,0);}};
 $("prevBtn").onclick=()=>{if(cur>0){cur--;render();window.scrollTo(0,0);}};
-$("exitBtn").onclick=()=>{ if(confirm("Exit this quiz and return to the menu? Progress will be lost.")){ stopTimer(); $("quiz").style.display="none"; $("start").style.display="block"; window.scrollTo(0,0);} };
+$("exitBtn").onclick=()=>{ if(confirm("Exit this quiz and return to the menu? Progress will be lost.")){ stopTimer(); $("quiz").style.display="none"; $("start").style.display="block"; renderResume(); window.scrollTo(0,0);} };
 
 // ---- Exam timer (Mock exams only) ----
 function setupTimerDisplay(){
@@ -248,16 +255,28 @@ function autoSubmit(){ if(timeExpired) return; timeExpired=true; showResults(); 
 // ---- Weakness tracking + revision (reusable; scaffolded for a future store / back end) ----
 function qid(q){ return q.m+"|"+q.t+"|"+q.q; }  // stable key, independent of option shuffling
 
-// Where weaknesses live. In-memory for now, so nothing persists between visits.
-// SCAFFOLD (use case 2): swap these three method bodies for localStorage, or a Supabase/REST
-// back end, with no caller changes. Keys are qid() strings, so they also work across different
-// materials. A future menu item could quiz WeaknessStore.all() ("practise everything I've missed").
+// Where weaknesses live: persisted in the browser (localStorage) so a student can leave and come
+// back on the same device with their weak areas intact.
+// SCAFFOLD (cross-device, next use case): swap _load/_save for a Supabase/REST call keyed by a
+// signed-in user. record/clearCorrect/all and every caller stay exactly the same.
 const WeaknessStore = {
-  _ids: new Set(),
-  record(qs, ans){ qs.forEach((q,i)=>{ if(ans[i]!==q.a) this._ids.add(qid(q)); }); },
-  clearCorrect(qs, ans){ qs.forEach((q,i)=>{ if(ans[i]===q.a) this._ids.delete(qid(q)); }); },
-  all(){ return [...this._ids]; }
+  KEY: "dgi_weak_v1",
+  _load(){ try { return new Set(JSON.parse(localStorage.getItem(this.KEY) || "[]")); } catch(e){ return new Set(); } },
+  _save(set){ try { localStorage.setItem(this.KEY, JSON.stringify([...set])); } catch(e){} },
+  record(qs, ans){ const s=this._load(); qs.forEach((q,i)=>{ if(ans[i]!==q.a) s.add(qid(q)); }); this._save(s); },
+  clearCorrect(qs, ans){ const s=this._load(); qs.forEach((q,i)=>{ if(ans[i]===q.a) s.delete(qid(q)); }); this._save(s); },
+  all(){ return [...this._load()]; }
 };
+
+// The questions behind the saved weak-area keys (from the current bank).
+function savedWeaknessPool(){ const ids=new Set(WeaknessStore.all()); return BANK.filter(b=>ids.has(qid(b))); }
+
+// Show or refresh the "welcome back" entry point on the menu.
+function renderResume(){
+  const pool=savedWeaknessPool();
+  if(pool.length){ $("resumePanel").style.display=""; $("resumeN").textContent=pool.length+" saved"; }
+  else { $("resumePanel").style.display="none"; }
+}
 
 // Revision set = the questions missed + unseen questions on the same weak topics.
 // Pass a different `bank` to reuse this engine for other course material (use case 2).
@@ -308,7 +327,7 @@ function showResults(){
   else { $("reviseBtn").style.display="none"; }
   window.scrollTo(0,0);
 }
-$("retryBtn").onclick=()=>{$("results").style.display="none";$("start").style.display="block";window.scrollTo(0,0);};
+$("retryBtn").onclick=()=>{$("results").style.display="none";$("start").style.display="block";renderResume();window.scrollTo(0,0);};
 $("reviseBtn").onclick=()=>{ if(revisionPool.length) startQuiz(revisionPool, "Practice your weak areas"); };
 renderStart();
 </script>
