@@ -116,7 +116,7 @@
 
   <div id="quiz">
     <div class="bar">
-      <div class="topline"><span class="qtitle" id="qtitle"></span><button class="exit" id="exitBtn">✕ Exit to menu</button></div>
+      <div class="topline"><span class="qtitle" id="qtitle"></span><span id="examTimer" style="display:none;margin-left:auto;margin-right:12px;font-variant-numeric:tabular-nums;"></span><button class="exit" id="exitBtn">✕ Exit to menu</button></div>
       <div class="progwrap"><div class="prog" id="prog"></div></div>
       <div class="meta"><span id="counter"></span><span id="answered"></span></div>
     </div>
@@ -187,7 +187,7 @@ function buildAdaptive(){
 let questions=[], cur=0, answers=[], quizTitle="";
 
 const PAPER_TILES=[
-  {key:"refresher",label:"Refresher V3 — 30 Jun 2026 deck",desc:"50 questions based only on the CBD Refresher deck"},
+  {key:"refresher",label:"Refresher V3 — 30 Jun 2026 deck",desc:"90-minute timed exam · 50 questions based only on the CBD Refresher deck"},
   {key:"official",label:"Official Exam — exact paper",desc:"The real BDI sample paper, verbatim"},
   {key:"b",label:"Mock B — reworded",desc:"Same topics & answers, different wording"},
   {key:"c",label:"Mock C — reworded",desc:"Same topics & answers, different wording"},
@@ -215,7 +215,7 @@ function renderStart(){
   $("mockList").innerHTML=PAPER_TILES.map((p,i)=>'<div class="bigmode" data-i="'+i+'" style="margin-bottom:10px;"><div><div class="t">'+p.label+'</div><div class="d">'+p.desc+' · 50 Qs · 60% to pass</div></div><div class="n">50 Qs</div></div>').join("");
   document.querySelectorAll('#mockList .bigmode').forEach(el=>el.onclick=()=>{
     const p=PAPER_TILES[+el.dataset.i];
-    startQuiz(PAPERS[p.key], p.label);
+    startQuiz(PAPERS[p.key], p.label, p.key==="refresher"?90:0);
   });
   $("poolNote").innerHTML="Question pool: "+MODULES.map(m=>MNAME[m]+" ("+BANK.filter(q=>q.m===m).length+")").join(" · ")+" · Total "+BANK.length+", plus 3 full papers.";
   let h="";
@@ -235,14 +235,15 @@ function renderStart(){
   });
 }
 
-function startQuiz(pool, title){
+function fmtT(s){var m=Math.floor(s/60),ss=s%60;return m+":"+(ss<10?"0":"")+ss;}var EXAM_TIMER=null,EXAM_LEFT=0;function clearTimer(){if(EXAM_TIMER){clearInterval(EXAM_TIMER);EXAM_TIMER=null;}var el=document.getElementById("examTimer");if(el)el.style.display="none";}function paintTimer(){var el=document.getElementById("examTimer");if(!el)return;el.textContent="\u23F1 "+fmtT(Math.max(0,EXAM_LEFT))+" left";el.style.fontWeight="700";el.style.color=EXAM_LEFT<=60?"#b4341f":(EXAM_LEFT<=300?"#a86a00":"#1F3864");}function startTimer(mins){clearTimer();EXAM_LEFT=mins*60;var el=document.getElementById("examTimer");if(el)el.style.display="inline-block";paintTimer();EXAM_TIMER=setInterval(function(){EXAM_LEFT--;paintTimer();if(EXAM_LEFT<=0){clearTimer();alert("Time is up. Your exam will now be submitted.");showResults(true);}},1000);}
+function startQuiz(pool, title, minutes){
   quizTitle=title;
   questions=shuffle(pool.slice()).map(orig=>{
     const idx=orig.o.map((_,i)=>i); shuffle(idx);
     return {m:orig.m,t:orig.t,q:orig.q,o:idx.map(i=>orig.o[i]),a:idx.indexOf(orig.a),e:orig.e};
   });
   answers=Array(questions.length).fill(null); cur=0;
-  $("start").style.display="none"; $("results").style.display="none"; $("quiz").style.display="block";
+  $("start").style.display="none"; $("results").style.display="none"; $("quiz").style.display="block"; if(minutes){startTimer(minutes);}else{clearTimer();}
   render(); window.scrollTo(0,0);
 }
 
@@ -269,9 +270,9 @@ function render(){
 }
 $("nextBtn").onclick=()=>{if(cur===questions.length-1)showResults();else{cur++;render();window.scrollTo(0,0);}};
 $("prevBtn").onclick=()=>{if(cur>0){cur--;render();window.scrollTo(0,0);}};
-$("exitBtn").onclick=()=>{ if(confirm("Exit this quiz and return to the menu? Progress will be lost.")){ $("quiz").style.display="none"; $("start").style.display="block"; window.scrollTo(0,0);} };
+$("exitBtn").onclick=()=>{ if(confirm("Exit this quiz and return to the menu? Progress will be lost.")){ clearTimer(); $("quiz").style.display="none"; $("start").style.display="block"; window.scrollTo(0,0);} };
 
-function showResults(){
+function showResults(){clearTimer();
   const score=answers.reduce((s,a,i)=>s+(a===questions[i].a?1:0),0);
   const pct=Math.round(score/questions.length*100), pass=pct>=60;
   // update the saved mistake set: add wrong, remove now-correct
@@ -306,7 +307,7 @@ function showResults(){
   });
   $("review").innerHTML=rev; window.scrollTo(0,0);
 }
-$("retryBtn").onclick=()=>{$("results").style.display="none";renderStart();$("start").style.display="block";window.scrollTo(0,0);};
+$("retryBtn").onclick=()=>{clearTimer();$("results").style.display="none";renderStart();$("start").style.display="block";window.scrollTo(0,0);};
 renderStart();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
